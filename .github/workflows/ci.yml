@@ -1,4 +1,4 @@
-name: Dashboard Reality CI Gate
+name: Dashboard Reality & Browser E2E Gate
 
 on:
   push:
@@ -22,5 +22,17 @@ jobs:
       - name: Install dependencies with strict lockfile
         run: npm ci
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Unit Tests (Decimal & Stale-Quote Invariants)
+        run: npm run test:unit
+
+      - name: Run Playwright Browser E2E Tests
+        run: npm run test:e2e
+
       - name: Run Vite production asset build verification
         run: npm run build
+
+      - name: Run Static Type & Lint Verification
+        run: npm run lint
