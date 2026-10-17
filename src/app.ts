@@ -1,4 +1,4 @@
-// QMOOSA AMM Web4 Dashboard Controller
+// QMOOSA AMM Web4 Dashboard Controller — Local Simulation Mode
 
 interface MockPool {
   tokenA: string;
@@ -64,10 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
   inputAmountIn?.addEventListener("input", updateUi);
 
   connectBtn?.addEventListener("click", () => {
-    userAddress = "0x71C83...f12B";
-    connectBtn.innerText = "0x71C83...f12B";
+    // Explicitly label as Simulated Account
+    userAddress = "0xSimulatedDevAccount...f12B";
+    connectBtn.innerText = "Simulated Account Connected";
     connectBtn.classList.remove("bg-cyan-600");
-    connectBtn.classList.add("bg-emerald-600");
+    connectBtn.classList.add("bg-amber-600");
   });
 
   swapForm?.addEventListener("submit", (e) => {
@@ -85,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (txLog) {
       const li = document.createElement("li");
       li.className = "p-2 rounded bg-slate-950/60 border border-slate-800 text-slate-300 flex items-center justify-between";
-      li.innerHTML = `<span>Swapped ${valIn} USDC for ${q.amountOut.toFixed(4)} ETH</span><span class="text-emerald-400">SUCCESS</span>`;
+      li.innerHTML = `<span>Swapped ${valIn} USDC for ${q.amountOut.toFixed(4)} ETH</span><span class="text-amber-400 font-mono text-[10px]">[LOCAL SIMULATION]</span>`;
       txLog.prepend(li);
     }
   });

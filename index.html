@@ -3,12 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QMOOSA AMM — Decentralized Liquidity & Swaps</title>
+  <title>QMOOSA AMM — Decentralized Liquidity Console [SIMULATION ENVIRONMENT]</title>
   <link rel="stylesheet" href="./src/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <!-- Disclaimer Banner -->
+  <div class="bg-amber-950/80 border-b border-amber-800/80 px-4 py-2 text-center text-xs font-mono text-amber-300 flex items-center justify-center space-x-2">
+    <span class="font-bold">⚠️ DEVELOPMENT NOTICE:</span>
+    <span>This dashboard operates in DEMONSTRATION / LOCAL SIMULATION MODE. No live on-chain assets or mainnet funds are handled.</span>
+  </div>
+
   <!-- Top Navigation Header -->
   <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
     <div class="flex items-center space-x-3">
@@ -18,20 +24,20 @@
       <div>
         <h1 class="font-bold text-lg leading-tight tracking-tight text-white flex items-center space-x-2">
           <span>QMOOSA AMM</span>
-          <span class="text-xs font-mono uppercase bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 px-2 py-0.5 rounded-full">v1.0.0-pilot</span>
+          <span class="text-xs font-mono uppercase bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 px-2 py-0.5 rounded-full">v1.1.0-sim</span>
         </h1>
-        <p class="text-xs text-slate-400 font-mono">Constant-Product Web4 Swaps & Liquidity</p>
+        <p class="text-xs text-slate-400 font-mono">Constant-Product Liquidity & Swap Simulator</p>
       </div>
     </div>
 
     <!-- Live Telemetry Status & Wallet Button -->
     <div class="flex items-center space-x-4">
       <div class="hidden sm:flex items-center space-x-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>MAINNET: LOCKED (ZERO-SPEND)</span>
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span>SETTLEMENT: LOCAL SANDBOX</span>
       </div>
       <button id="connectWalletBtn" class="px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all text-white shadow-md shadow-cyan-600/30">
-        Connect Wallet
+        Connect Simulated Wallet
       </button>
     </div>
   </header>
@@ -46,8 +52,8 @@
           <button id="tabPool" class="px-4 py-1.5 rounded-lg font-medium text-sm text-slate-400 hover:text-slate-200">Liquidity</button>
         </div>
         <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
-          <span>Slippage:</span>
-          <span class="text-cyan-400 bg-slate-800 px-2 py-0.5 rounded">0.5%</span>
+          <span>Slippage Tolerance:</span>
+          <span class="text-cyan-400 bg-slate-800 px-2 py-0.5 rounded">0.5% (50 bps)</span>
         </div>
       </div>
 
@@ -56,7 +62,7 @@
         <!-- Pay Input -->
         <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/60 focus-within:border-cyan-500/60 transition-colors">
           <div class="flex justify-between text-xs text-slate-400 mb-2">
-            <span>You Pay</span>
+            <span>You Pay (Simulated)</span>
             <span>Balance: <span id="tokenInBal" class="text-slate-200 font-mono">1,000.00</span></span>
           </div>
           <div class="flex items-center space-x-3">
@@ -64,7 +70,6 @@
             <select id="selectTokenIn" class="bg-slate-800 border border-slate-700 text-sm font-semibold rounded-lg px-3 py-1.5 text-slate-100">
               <option value="USDC">USDC</option>
               <option value="ETH">ETH</option>
-              <option value="QMOOSA">QMOOSA</option>
             </select>
           </div>
         </div>
@@ -79,7 +84,7 @@
         <!-- Receive Input -->
         <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/60">
           <div class="flex justify-between text-xs text-slate-400 mb-2">
-            <span>You Receive (Estimated)</span>
+            <span>You Receive (Calculated Quote)</span>
             <span>Balance: <span id="tokenOutBal" class="text-slate-200 font-mono">25.00</span></span>
           </div>
           <div class="flex items-center space-x-3">
@@ -87,7 +92,6 @@
             <select id="selectTokenOut" class="bg-slate-800 border border-slate-700 text-sm font-semibold rounded-lg px-3 py-1.5 text-slate-100">
               <option value="ETH">ETH</option>
               <option value="USDC">USDC</option>
-              <option value="QMOOSA">QMOOSA</option>
             </select>
           </div>
         </div>
@@ -103,14 +107,18 @@
             <span id="labelPriceImpact" class="text-emerald-400">&lt; 0.05%</span>
           </div>
           <div class="flex justify-between">
-            <span>LP Fee (0.3%):</span>
+            <span>LP Fee (0.30% / 30 bps):</span>
             <span id="labelFee" class="text-slate-200">0.03 USDC</span>
+          </div>
+          <div class="flex justify-between text-slate-500 pt-1 border-t border-slate-800/40">
+            <span>Broadcast Status:</span>
+            <span>LOCAL ENGINE SIMULATION ONLY</span>
           </div>
         </div>
 
         <!-- Action Button -->
         <button type="submit" id="btnExecuteSwap" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.99] font-bold text-white shadow-lg shadow-cyan-500/20 transition">
-          Execute Swap
+          Simulate Swap Execution
         </button>
       </form>
     </section>
@@ -119,7 +127,10 @@
     <section class="md:col-span-5 space-y-6">
       <!-- Active Pool Card -->
       <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Active Pool Reserves</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono">Demo Pool Reserves</h2>
+          <span class="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded">MOCK DATA</span>
+        </div>
         <div class="space-y-4 font-mono text-sm">
           <div class="flex justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
             <span class="text-slate-400">Reserve USDC:</span>
@@ -138,11 +149,11 @@
 
       <!-- Execution Log -->
       <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Verified Transaction Ledger</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Local Simulation Ledger</h2>
         <ul id="txLog" class="space-y-2 text-xs font-mono max-h-48 overflow-y-auto">
           <li class="p-2 rounded bg-slate-950/60 border border-slate-800 text-slate-400 flex items-center justify-between">
-            <span>Pool Initialized (USDC/ETH)</span>
-            <span class="text-emerald-400">CONFIRMED</span>
+            <span>Demo Pool Initialized</span>
+            <span class="text-cyan-400">[SIMULATED]</span>
           </li>
         </ul>
       </div>

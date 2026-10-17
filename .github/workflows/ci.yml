@@ -17,9 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install --no-audit
+      - name: Install dependencies with strict lockfile
+        run: npm ci
 
-      - name: Verify asset integrity
-        run: npm test
+      - name: Run Vite production asset build verification
+        run: npm run build
