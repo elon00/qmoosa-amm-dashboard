@@ -6,9 +6,9 @@ export class DashboardController {
   constructor(engine, sdkClient) {
     this.engine = engine || new AmmEngine();
     this.sdkClient = sdkClient || new QmoosaAmmClient({ defaultSlippageBps: 50 });
-    this.poolVersion = 1;
-    this.activeQuote = null;
+    this.quoteGeneration = 0;
     this.latestQuoteRequestId = 0;
+    this.activeQuote = null;
     this.isQuotePending = false;
     this.userAddress = null;
     this.decimals = {
@@ -38,18 +38,36 @@ export class DashboardController {
     return { pool, reserveUsdc, reserveEth };
   }
 
+  /**
+   * Invalidates any active quote and advances the generation identifier.
+   * Any pending or in-flight quote requests created prior to this call
+   * will be discarded upon resolution and cannot restore an executable quote.
+   */
   invalidateQuote() {
+    this.quoteGeneration++;
     this.activeQuote = null;
+    this.isQuotePending = false;
   }
 
   async requestQuote(rawInputString, tokenIn, tokenOut) {
-    this.invalidateQuote();
+    // 1. Mandatory asset identity validation
+    if (!tokenIn || !tokenOut) {
+      return { quote: null, error: "INVALID_TOKEN_PAIR: Both tokens must be specified" };
+    }
+    if (tokenIn.trim().toLowerCase() === tokenOut.trim().toLowerCase()) {
+      this.invalidateQuote();
+      return { quote: null, error: "IDENTICAL_TOKENS_FORBIDDEN: Cannot quote swap between identical assets" };
+    }
+
+    // 2. Invalidate previous quote and advance generation monotonically
+    this.quoteGeneration++;
+    const currentGeneration = this.quoteGeneration;
     this.latestQuoteRequestId++;
     const currentRequestId = this.latestQuoteRequestId;
-    const currentPoolVersion = this.poolVersion;
 
     const decimalsIn = this.decimals[tokenIn];
     if (decimalsIn === undefined) {
+      this.activeQuote = null;
       return { quote: null, error: `Unsupported input token: ${tokenIn}` };
     }
 
@@ -57,59 +75,98 @@ export class DashboardController {
     try {
       amountInUnits = parseFinancialUnits(rawInputString, decimalsIn);
     } catch (err) {
+      this.activeQuote = null;
       return { quote: null, error: err.message };
     }
 
-    const { pool, reserveUsdc, reserveEth } = this.getPoolReserves();
+    if (amountInUnits <= 0n) {
+      this.activeQuote = null;
+      return { quote: null, error: "ZERO_AMOUNT_FORBIDDEN: Swap input amount must be positive" };
+    }
+
+    // 3. Snapshot live pool reserves and mutation markers directly from the engine
+    const { pool: initialPool, reserveUsdc, reserveEth } = this.getPoolReserves();
+    const snapshotReserveA = initialPool.reserveA;
+    const snapshotReserveB = initialPool.reserveB;
+    const snapshotTradeCount = initialPool.tradeCount;
+
     const rIn = tokenIn === "USDC" ? reserveUsdc : reserveEth;
     const rOut = tokenIn === "USDC" ? reserveEth : reserveUsdc;
 
     this.isQuotePending = true;
+
     try {
       const sdkQuote = await this.sdkClient.getQuote(
         {
           tokenIn,
           tokenOut,
           amountIn: amountInUnits.toString(),
-          feeBps: pool.feeBps,
+          feeBps: initialPool.feeBps,
           slippageBps: 50
         },
         rIn.toString(),
         rOut.toString()
       );
 
-      // Check for out-of-order response (a newer quote request was made)
-      if (currentRequestId !== this.latestQuoteRequestId) {
-        return { quote: null, error: "Out-of-order quote discarded" };
+      // Check 1: Monotonic request generation cancellation
+      // If invalidateQuote() was called (e.g. input cleared, reset), generation has advanced
+      if (this.quoteGeneration !== currentGeneration) {
+        return { quote: null, error: "SUPERSEDED_QUOTE_GENERATION: In-flight quote canceled by newer user action" };
       }
 
-      // Check if pool mutated while quote was in flight
-      if (currentPoolVersion !== this.poolVersion) {
-        return { quote: null, error: "Pool mutated during quote calculation" };
+      // Check 2: Monotonic request ID ordering (newer request started)
+      if (this.latestQuoteRequestId !== currentRequestId) {
+        return { quote: null, error: "OUT_OF_ORDER_QUOTE: Discarded older asynchronous quote" };
+      }
+
+      // Check 3: Real pool mutation detection from engine state store
+      const { pool: livePool } = this.getPoolReserves();
+      if (
+        livePool.tradeCount !== snapshotTradeCount ||
+        livePool.reserveA !== snapshotReserveA ||
+        livePool.reserveB !== snapshotReserveB
+      ) {
+        return { quote: null, error: "POOL_MUTATED: Pool reserves mutated during quote calculation" };
+      }
+
+      const expectedOutUnits = BigInt(sdkQuote.expectedAmountOut);
+      const minAmountOutUnits = BigInt(sdkQuote.minAmountOut);
+
+      // Check 4: Zero-output rejection
+      if (expectedOutUnits <= 0n || minAmountOutUnits <= 0n) {
+        return { quote: null, error: "ZERO_OUTPUT_QUOTE: Quote resulted in zero executable output" };
       }
 
       const boundQuote = {
+        generation: currentGeneration,
         requestId: currentRequestId,
         tokenIn,
         tokenOut,
         rawInputString,
         amountInUnits,
-        expectedOutUnits: BigInt(sdkQuote.expectedAmountOut),
-        minAmountOutUnits: BigInt(sdkQuote.minAmountOut),
+        expectedOutUnits,
+        minAmountOutUnits,
         feeUnits: BigInt(sdkQuote.feeAmount),
         priceImpactPercent: sdkQuote.priceImpactPercent,
         reserveInAtQuote: rIn,
         reserveOutAtQuote: rOut,
-        poolVersion: currentPoolVersion,
+        snapshotReserveA,
+        snapshotReserveB,
+        snapshotTradeCount,
         timestamp: Date.now()
       };
 
-      this.activeQuote = boundQuote;
-      return { quote: boundQuote };
+      // Atomic binding only if state remains unperturbed
+      if (this.quoteGeneration === currentGeneration && this.latestQuoteRequestId === currentRequestId) {
+        this.activeQuote = boundQuote;
+        return { quote: boundQuote };
+      } else {
+        return { quote: null, error: "SUPERSEDED_QUOTE_GENERATION: Quote canceled prior to state commitment" };
+      }
     } catch (err) {
       return { quote: null, error: err.message };
     } finally {
-      if (currentRequestId === this.latestQuoteRequestId) {
+      if (this.latestQuoteRequestId === currentRequestId) {
         this.isQuotePending = false;
       }
     }
@@ -130,16 +187,16 @@ export class DashboardController {
     if (this.activeQuote.tokenIn !== currentTokenIn || this.activeQuote.tokenOut !== currentTokenOut) {
       throw new Error("STALE_QUOTE_ERROR: Token selection changed since quote was generated. Swap blocked.");
     }
-    if (this.activeQuote.poolVersion !== this.poolVersion) {
-      throw new Error("STALE_QUOTE_ERROR: Pool state updated since quote was generated. Swap blocked.");
-    }
 
-    const { reserveUsdc, reserveEth } = this.getPoolReserves();
-    const rIn = currentTokenIn === "USDC" ? reserveUsdc : reserveEth;
-    const rOut = currentTokenIn === "USDC" ? reserveEth : reserveUsdc;
-
-    if (rIn !== this.activeQuote.reserveInAtQuote || rOut !== this.activeQuote.reserveOutAtQuote) {
-      throw new Error("STALE_QUOTE_ERROR: Reserves changed since quote was generated. Swap blocked.");
+    // Verify against actual live engine state
+    const { pool: livePool } = this.getPoolReserves();
+    if (
+      livePool.tradeCount !== this.activeQuote.snapshotTradeCount ||
+      livePool.reserveA !== this.activeQuote.snapshotReserveA ||
+      livePool.reserveB !== this.activeQuote.snapshotReserveB
+    ) {
+      this.invalidateQuote();
+      throw new Error("STALE_QUOTE_ERROR: Pool state mutated since quote was generated. Swap blocked.");
     }
 
     const quoteToExecute = this.activeQuote;
@@ -156,9 +213,8 @@ export class DashboardController {
 
     const amountIn = quoteToExecute.amountInUnits;
 
-    // Invalidate quote immediately upon state transition and increment poolVersion
-    this.poolVersion++;
-    this.activeQuote = null;
+    // Invalidate quote immediately upon state transition
+    this.invalidateQuote();
 
     return {
       amountIn,

@@ -58,7 +58,7 @@ async function handleInputChange() {
 
   const { quote, error } = await controller.requestQuote(rawInput, tokenIn, tokenOut);
 
-  if (error || !quote) {
+  if (error || !quote || controller.activeQuote !== quote) {
     if (inputAmountOut) inputAmountOut.value = "Invalid Input";
     if (labelMinOut) {
       labelMinOut.innerText = error || "Parsing Error";
@@ -66,7 +66,7 @@ async function handleInputChange() {
     }
     if (btnExecute) {
       btnExecute.disabled = true;
-      btnExecute.innerText = "Invalid Financial Amount";
+      btnExecute.innerText = error ? "Invalid Quote" : "Enter valid amount";
     }
     return;
   }

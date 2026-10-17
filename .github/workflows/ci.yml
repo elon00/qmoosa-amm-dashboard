@@ -34,5 +34,8 @@ jobs:
       - name: Run Vite production asset build verification
         run: npm run build
 
-      - name: Run Static Type & Lint Verification
+      - name: Run Static Type Verification (tsc)
+        run: npm run typecheck
+
+      - name: Run Code Linting Gate (ESLint)
         run: npm run lint
