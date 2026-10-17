@@ -10,6 +10,11 @@
     "test": "vite build",
     "lint": "vite build --mode development"
   },
+  "dependencies": {
+    "@qmoosa/amm-protocol": "file:./packages/qmoosa-amm-protocol-1.1.0.tgz",
+    "@qmoosa/amm-engine": "file:./packages/qmoosa-amm-engine-1.1.0.tgz",
+    "@qmoosa/amm-sdk": "file:./packages/qmoosa-amm-sdk-1.1.0.tgz"
+  },
   "keywords": [
     "amm",
     "dashboard",
