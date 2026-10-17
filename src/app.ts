@@ -1,8 +1,8 @@
 // QMOOSA AMM Web4 Dashboard Controller — Local Sandbox Mode (Mission 05C Hardened)
 // Strictly consumes DashboardController, @qmoosa/amm-sdk, and @qmoosa/amm-engine
 
-import { DashboardController } from "./controller.ts";
-import { formatFinancialUnits } from "./decimal.ts";
+import { DashboardController } from "./controller.js";
+import { formatFinancialUnits } from "./decimal.js";
 
 const controller = new DashboardController();
 
@@ -34,8 +34,9 @@ async function handleInputChange() {
   const rawInput = inputAmountIn?.value || "";
   const tokenIn = selectTokenIn?.value || "USDC";
   const tokenOut = selectTokenOut?.value || "ETH";
-  const decimalsOut = controller.decimals[tokenOut] ?? 18;
-  const decimalsIn = controller.decimals[tokenIn] ?? 6;
+  const decMap = controller.decimals as Record<string, number>;
+  const decimalsOut = decMap[tokenOut] ?? 18;
+  const decimalsIn = decMap[tokenIn] ?? 6;
 
   // Invalidate any active quote immediately when input changes
   controller.invalidateQuote();
@@ -150,8 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (txLog) {
         const li = document.createElement("li");
         li.className = "p-2 rounded bg-slate-950/60 border border-slate-800 text-slate-300 flex items-center justify-between";
-        const decimalsIn = controller.decimals[tokenIn] ?? 6;
-        const decimalsOut = controller.decimals[tokenOut] ?? 18;
+        const decMap = controller.decimals as Record<string, number>;
+        const decimalsIn = decMap[tokenIn] ?? 6;
+        const decimalsOut = decMap[tokenOut] ?? 18;
         const formattedIn = formatFinancialUnits(swapResult.amountIn, decimalsIn, 4);
         const formattedOut = formatFinancialUnits(swapResult.amountOut, decimalsOut, 4);
         li.innerHTML = `<span>Swapped ${formattedIn} ${tokenIn} → ${formattedOut} ${tokenOut}</span><span class="text-amber-400 font-mono text-[10px]">[SANDBOX ENGINE]</span>`;

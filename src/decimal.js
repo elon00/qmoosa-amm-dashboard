@@ -1,6 +1,5 @@
 export class DecimalParsingError extends Error {
-  public code: string;
-  constructor(code: string, message: string) {
+  constructor(code, message) {
     super(`[${code}] ${message}`);
     this.name = "DecimalParsingError";
     this.code = code;
@@ -19,7 +18,7 @@ export class DecimalParsingError extends Error {
  * - Reject zero base units (must be strictly positive)
  * - Exact BigInt base-unit calculation
  */
-export function parseFinancialUnits(input: string, decimals: number): bigint {
+export function parseFinancialUnits(input, decimals) {
   if (typeof input !== "string") {
     throw new DecimalParsingError("INVALID_TYPE", "Input must be a string");
   }
@@ -79,7 +78,7 @@ export function parseFinancialUnits(input: string, decimals: number): bigint {
 /**
  * Format base units back to decimal string with optional display trimming.
  */
-export function formatFinancialUnits(units: bigint, decimals: number, maxDisplayDecimals?: number): string {
+export function formatFinancialUnits(units, decimals, maxDisplayDecimals) {
   if (typeof units !== "bigint") {
     throw new Error("Units must be a BigInt");
   }

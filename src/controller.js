@@ -1,40 +1,20 @@
 import { QmoosaAmmClient } from "@qmoosa/amm-sdk";
 import { AmmEngine } from "@qmoosa/amm-engine";
-import { parseFinancialUnits } from "./decimal.ts";
-
-export interface BoundQuote {
-  requestId: number;
-  tokenIn: string;
-  tokenOut: string;
-  rawInputString: string;
-  amountInUnits: bigint;
-  expectedOutUnits: bigint;
-  minAmountOutUnits: bigint;
-  feeUnits: bigint;
-  priceImpactPercent: number;
-  reserveInAtQuote: bigint;
-  reserveOutAtQuote: bigint;
-  poolVersion: number;
-  timestamp: number;
-}
+import { parseFinancialUnits } from "./decimal.js";
 
 export class DashboardController {
-  public engine: AmmEngine;
-  public sdkClient: QmoosaAmmClient;
-  public poolId: string;
-  public poolVersion: number = 1;
-  public activeQuote: BoundQuote | null = null;
-  public latestQuoteRequestId: number = 0;
-  public isQuotePending: boolean = false;
-  public userAddress: string | null = null;
-  public decimals: Record<string, number> = {
-    USDC: 6,
-    ETH: 18
-  };
-
-  constructor(engine?: AmmEngine, sdkClient?: QmoosaAmmClient) {
+  constructor(engine, sdkClient) {
     this.engine = engine || new AmmEngine();
     this.sdkClient = sdkClient || new QmoosaAmmClient({ defaultSlippageBps: 50 });
+    this.poolVersion = 1;
+    this.activeQuote = null;
+    this.latestQuoteRequestId = 0;
+    this.isQuotePending = false;
+    this.userAddress = null;
+    this.decimals = {
+      USDC: 6,
+      ETH: 18
+    };
 
     const initialUsdc = parseFinancialUnits("50000", this.decimals.USDC);
     const initialEth = parseFinancialUnits("25", this.decimals.ETH);
@@ -50,7 +30,7 @@ export class DashboardController {
     this.poolId = poolId;
   }
 
-  public getPoolReserves() {
+  getPoolReserves() {
     const pool = this.engine.store.getPool(this.poolId);
     if (!pool) throw new Error("Pool not found");
     const reserveUsdc = pool.tokenA === "USDC" ? BigInt(pool.reserveA) : BigInt(pool.reserveB);
@@ -58,15 +38,11 @@ export class DashboardController {
     return { pool, reserveUsdc, reserveEth };
   }
 
-  public invalidateQuote(): void {
+  invalidateQuote() {
     this.activeQuote = null;
   }
 
-  public async requestQuote(
-    rawInputString: string,
-    tokenIn: string,
-    tokenOut: string
-  ): Promise<{ quote: BoundQuote | null; error?: string }> {
+  async requestQuote(rawInputString, tokenIn, tokenOut) {
     this.invalidateQuote();
     this.latestQuoteRequestId++;
     const currentRequestId = this.latestQuoteRequestId;
@@ -77,10 +53,10 @@ export class DashboardController {
       return { quote: null, error: `Unsupported input token: ${tokenIn}` };
     }
 
-    let amountInUnits: bigint;
+    let amountInUnits;
     try {
       amountInUnits = parseFinancialUnits(rawInputString, decimalsIn);
-    } catch (err: any) {
+    } catch (err) {
       return { quote: null, error: err.message };
     }
 
@@ -112,7 +88,7 @@ export class DashboardController {
         return { quote: null, error: "Pool mutated during quote calculation" };
       }
 
-      const boundQuote: BoundQuote = {
+      const boundQuote = {
         requestId: currentRequestId,
         tokenIn,
         tokenOut,
@@ -130,7 +106,7 @@ export class DashboardController {
 
       this.activeQuote = boundQuote;
       return { quote: boundQuote };
-    } catch (err: any) {
+    } catch (err) {
       return { quote: null, error: err.message };
     } finally {
       if (currentRequestId === this.latestQuoteRequestId) {
@@ -139,7 +115,7 @@ export class DashboardController {
     }
   }
 
-  public executeSwap(currentRawInput: string, currentTokenIn: string, currentTokenOut: string) {
+  executeSwap(currentRawInput, currentTokenIn, currentTokenOut) {
     if (!this.activeQuote) {
       throw new Error("STALE_QUOTE_ERROR: No active quote found. Please request a quote before swapping.");
     }

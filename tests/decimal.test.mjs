@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { parseFinancialUnits, formatFinancialUnits, DecimalParsingError } from "../src/decimal.ts";
+import { parseFinancialUnits, formatFinancialUnits, DecimalParsingError } from "../src/decimal.js";
 
 describe("Financial Input Parsing & Precision Enforcement (Mission 05C)", () => {
   const USDC_DECIMALS = 6;

@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { DashboardController } from "../src/controller.ts";
+import { DashboardController } from "../src/controller.js";
 
 describe("Stale-Quote Prevention & Quote Binding Suite (Mission 05C)", () => {
   test("Quote is successfully requested and bound to specific input parameters", async () => {
