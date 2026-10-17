@@ -33,8 +33,9 @@ export class DashboardController {
   getPoolReserves() {
     const pool = this.engine.store.getPool(this.poolId);
     if (!pool) throw new Error("Pool not found");
-    const reserveUsdc = pool.tokenA === "USDC" ? BigInt(pool.reserveA) : BigInt(pool.reserveB);
-    const reserveEth = pool.tokenA === "ETH" ? BigInt(pool.reserveA) : BigInt(pool.reserveB);
+    const isTokenAUsdc = pool.tokenA.toLowerCase() === "usdc";
+    const reserveUsdc = isTokenAUsdc ? BigInt(pool.reserveA) : BigInt(pool.reserveB);
+    const reserveEth = isTokenAUsdc ? BigInt(pool.reserveB) : BigInt(pool.reserveA);
     return { pool, reserveUsdc, reserveEth };
   }
 
@@ -90,8 +91,9 @@ export class DashboardController {
     const snapshotReserveB = initialPool.reserveB;
     const snapshotTradeCount = initialPool.tradeCount;
 
-    const rIn = tokenIn === "USDC" ? reserveUsdc : reserveEth;
-    const rOut = tokenIn === "USDC" ? reserveEth : reserveUsdc;
+    const isTokenInUsdc = tokenIn.toLowerCase() === "usdc";
+    const rIn = isTokenInUsdc ? reserveUsdc : reserveEth;
+    const rOut = isTokenInUsdc ? reserveEth : reserveUsdc;
 
     this.isQuotePending = true;
 
