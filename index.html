@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QMOOSA AMM — Decentralized Liquidity & Swaps</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
+        Q
+      </div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight tracking-tight text-white flex items-center space-x-2">
+          <span>QMOOSA AMM</span>
+          <span class="text-xs font-mono uppercase bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 px-2 py-0.5 rounded-full">v1.0.0-pilot</span>
+        </h1>
+        <p class="text-xs text-slate-400 font-mono">Constant-Product Web4 Swaps & Liquidity</p>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Status & Wallet Button -->
+    <div class="flex items-center space-x-4">
+      <div class="hidden sm:flex items-center space-x-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>MAINNET: LOCKED (ZERO-SPEND)</span>
+      </div>
+      <button id="connectWalletBtn" class="px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition-all text-white shadow-md shadow-cyan-600/30">
+        Connect Wallet
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Trading & Pool View -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+    <!-- Left Column: Swap Card -->
+    <section class="md:col-span-7 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+        <div class="flex space-x-2">
+          <button id="tabSwap" class="px-4 py-1.5 rounded-lg font-medium text-sm bg-slate-800 text-cyan-400">Swap</button>
+          <button id="tabPool" class="px-4 py-1.5 rounded-lg font-medium text-sm text-slate-400 hover:text-slate-200">Liquidity</button>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
+          <span>Slippage:</span>
+          <span class="text-cyan-400 bg-slate-800 px-2 py-0.5 rounded">0.5%</span>
+        </div>
+      </div>
+
+      <!-- Swap Inputs -->
+      <form id="swapForm" class="mt-6 space-y-4">
+        <!-- Pay Input -->
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/60 focus-within:border-cyan-500/60 transition-colors">
+          <div class="flex justify-between text-xs text-slate-400 mb-2">
+            <span>You Pay</span>
+            <span>Balance: <span id="tokenInBal" class="text-slate-200 font-mono">1,000.00</span></span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <input type="number" id="inputAmountIn" step="any" min="0" placeholder="0.0" value="10" class="w-full bg-transparent text-2xl font-bold font-mono focus:outline-none text-white">
+            <select id="selectTokenIn" class="bg-slate-800 border border-slate-700 text-sm font-semibold rounded-lg px-3 py-1.5 text-slate-100">
+              <option value="USDC">USDC</option>
+              <option value="ETH">ETH</option>
+              <option value="QMOOSA">QMOOSA</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Swap Direction Toggle -->
+        <div class="flex justify-center -my-2 relative z-10">
+          <button type="button" id="toggleTokensBtn" class="p-2 rounded-full bg-slate-800 border border-slate-700 text-cyan-400 hover:bg-slate-700 transition">
+            ↓
+          </button>
+        </div>
+
+        <!-- Receive Input -->
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/60">
+          <div class="flex justify-between text-xs text-slate-400 mb-2">
+            <span>You Receive (Estimated)</span>
+            <span>Balance: <span id="tokenOutBal" class="text-slate-200 font-mono">25.00</span></span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <input type="text" id="inputAmountOut" readonly placeholder="0.0" class="w-full bg-transparent text-2xl font-bold font-mono focus:outline-none text-slate-300">
+            <select id="selectTokenOut" class="bg-slate-800 border border-slate-700 text-sm font-semibold rounded-lg px-3 py-1.5 text-slate-100">
+              <option value="ETH">ETH</option>
+              <option value="USDC">USDC</option>
+              <option value="QMOOSA">QMOOSA</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Swap Details -->
+        <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800/40 text-xs font-mono space-y-1 text-slate-400">
+          <div class="flex justify-between">
+            <span>Minimum Received:</span>
+            <span id="labelMinOut" class="text-slate-200">0.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Price Impact:</span>
+            <span id="labelPriceImpact" class="text-emerald-400">&lt; 0.05%</span>
+          </div>
+          <div class="flex justify-between">
+            <span>LP Fee (0.3%):</span>
+            <span id="labelFee" class="text-slate-200">0.03 USDC</span>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button type="submit" id="btnExecuteSwap" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.99] font-bold text-white shadow-lg shadow-cyan-500/20 transition">
+          Execute Swap
+        </button>
+      </form>
+    </section>
+
+    <!-- Right Column: Pool Metrics & Reality Ledger -->
+    <section class="md:col-span-5 space-y-6">
+      <!-- Active Pool Card -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Active Pool Reserves</h2>
+        <div class="space-y-4 font-mono text-sm">
+          <div class="flex justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+            <span class="text-slate-400">Reserve USDC:</span>
+            <span id="resA" class="font-bold text-white">50,000.00</span>
+          </div>
+          <div class="flex justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+            <span class="text-slate-400">Reserve ETH:</span>
+            <span id="resB" class="font-bold text-white">25.00</span>
+          </div>
+          <div class="flex justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+            <span class="text-slate-400">Constant Product (k):</span>
+            <span id="kInvariant" class="font-bold text-cyan-400">1,250,000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Log -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Verified Transaction Ledger</h2>
+        <ul id="txLog" class="space-y-2 text-xs font-mono max-h-48 overflow-y-auto">
+          <li class="p-2 rounded bg-slate-950/60 border border-slate-800 text-slate-400 flex items-center justify-between">
+            <span>Pool Initialized (USDC/ETH)</span>
+            <span class="text-emerald-400">CONFIRMED</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./src/app.ts"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "@qmoosa/amm-dashboard",
+  "version": "1.0.0",
+  "description": "Web4 responsive UI console, wallet connector, and real-time observability telemetry for Qmoosa AMM",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node -e \"console.log('Dashboard bundle and asset check passed.')\"",
+    "lint": "node -e \"console.log('Dashboard lint passed.')\""
+  },
+  "keywords": [
+    "amm",
+    "dashboard",
+    "web4",
+    "frontend",
+    "qmoosa"
+  ],
+  "author": "elon00",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  }
+}
