@@ -1,0 +1,74 @@
+{
+  "engine": "REA_Reverse_Engineer_Anything",
+  "status": "STRUCTURE_RECONSTRUCTED",
+  "analyzed_files": 22,
+  "manifest": {
+    "eslint.config.js": {
+      "bytes": 918
+    },
+    "index.html": {
+      "bytes": 9216
+    },
+    "package-lock.json": {
+      "bytes": 82236
+    },
+    "package.json": {
+      "bytes": 1142
+    },
+    "playwright.config.ts": {
+      "bytes": 616
+    },
+    "README.md": {
+      "bytes": 193
+    },
+    "tsconfig.json": {
+      "bytes": 525
+    },
+    "e2e\\dashboard.spec.ts": {
+      "bytes": 6088
+    },
+    "packages\\qmoosa-amm-engine-1.1.0.tgz": {
+      "bytes": 9098
+    },
+    "packages\\qmoosa-amm-protocol-1.1.0.tgz": {
+      "bytes": 157892
+    },
+    "packages\\qmoosa-amm-sdk-1.1.0.tgz": {
+      "bytes": 11131
+    },
+    "scripts\\rea_inspector.py": {
+      "bytes": 1485
+    },
+    "scripts\\rsi_engine.py": {
+      "bytes": 2039
+    },
+    "src\\app.ts": {
+      "bytes": 7142
+    },
+    "src\\controller.js": {
+      "bytes": 8297
+    },
+    "src\\decimal.js": {
+      "bytes": 3781
+    },
+    "src\\style.css": {
+      "bytes": 288
+    },
+    "tests\\decimal.test.mjs": {
+      "bytes": 5215
+    },
+    "tests\\reality_check_harness.py": {
+      "bytes": 1250
+    },
+    "tests\\stale-quote.test.mjs": {
+      "bytes": 8864
+    },
+    ".github\\workflows\\ci.yml": {
+      "bytes": 1012
+    },
+    ".github\\workflows\\qmoosa-rsi-rea-sync.yml": {
+      "bytes": 531
+    }
+  },
+  "timestamp": 1794019894
+}
