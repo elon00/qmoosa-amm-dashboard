@@ -4,3 +4,6 @@ dist/
 *.log
 test-results/
 playwright-report/
+
+# Lean 4 build artifacts
+lean_verify/.lake/
